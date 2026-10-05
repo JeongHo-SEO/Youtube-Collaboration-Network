@@ -1,0 +1,47 @@
+name: Deploy network visualizations
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+      - name: Prepare visualizations
+        shell: bash
+        run: |
+          mkdir -p _site/Graph _site/Tasks/260422 _site/Tasks/260429
+          cp Graph/network_260429.html _site/Graph/
+          cp Tasks/260422/PR_youtube.html _site/Tasks/260422/
+          cp -R Tasks/260422/lib _site/Tasks/260422/
+          cp -R Tasks/260429/lib _site/Tasks/260429/
+          cat > _site/index.html <<'HTML'
+          <!doctype html>
+          <html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>YouTube Collaboration Network</title></head>
+          <body><h1>YouTube Collaboration Network</h1><p>2026 DGIST UGRP · Social Network Analysis</p><ul><li><a href="Graph/network_260429.html">방향 가중치 네트워크 (2026-04-29)</a></li><li><a href="Tasks/260422/PR_youtube.html">초기 PageRank 네트워크 (2026-04-22)</a></li></ul><p><a href="https://github.com/JeongHo-SEO/Youtube-Collaboration-Network">README와 코드 보기</a></p></body></html>
+          HTML
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: _site
+      - name: Deploy Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
